@@ -108,6 +108,36 @@ def from_justetf(prod):
     return pack(days, "EUR", "justETF " + prod["isin"])
 
 
+def cross_check(data, prod):
+    """Contrasta las variaciones mensuales con justETF y sustituye las que difieren mucho.
+
+    Devuelve la lista de meses corregidos. Los precios recientes no cambian: la serie se
+    reconstruye hacia atras desde el ultimo cierre.
+    """
+    ref = dict(from_justetf(prod)["mensual"])
+    m = data["mensual"]
+    rets, flagged = [None], []
+    for i in range(1, len(m)):
+        ry = m[i][1] / m[i - 1][1] - 1
+        rj = None
+        if m[i][0] in ref and m[i - 1][0] in ref:
+            rj = ref[m[i][0]] / ref[m[i - 1][0]] - 1
+        if rj is not None and abs(ry - rj) > 0.05:
+            flagged.append({"mes": m[i][0], "original": round(ry, 4), "justetf": round(rj, 4)})
+            rets.append(rj)
+        else:
+            rets.append(ry)
+    if not flagged:
+        return []
+    if len(flagged) > 6:
+        raise ValueError(f"{len(flagged)} meses discrepantes: no se corrige")
+    px = m[-1][1]
+    for i in range(len(m) - 1, 0, -1):
+        px = px / (1 + rets[i])
+        m[i - 1][1] = round(px, 4)
+    return flagged
+
+
 SOURCES = [("yfinance", from_yfinance), ("yahoo", from_yahoo), ("justetf", from_justetf)]
 
 
@@ -127,6 +157,14 @@ def main():
                 data["yahoo"], data["origen"] = sym, name
                 assets[pid] = data
                 log[name] = "ok"
+                if name != "justetf":
+                    try:
+                        fixes = cross_check(data, prod)
+                        log["contraste_justetf"] = fixes or "sin diferencias"
+                        if fixes:
+                            data["correcciones"] = [f["mes"] for f in fixes]
+                    except Exception as exc:
+                        log["contraste_justetf"] = f"no realizado: {type(exc).__name__}: {exc}"[:200]
                 print(f"ok    {sym:10s} {name}: {len(data['mensual'])} meses, ultimo {data['ultimo']}")
                 break
             except Exception as exc:

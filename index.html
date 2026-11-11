@@ -183,7 +183,8 @@ ul { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: .9375rem; ma
       </table>
     </div>
     <ul>
-      <li>Precios: cierres diarios en XETRA, en euros, descargados de Yahoo Finance una vez al día. Es una fuente no oficial y puede fallar o contener errores.</li>
+      <li>Precios: cierres diarios en euros, descargados una vez al día de Yahoo Finance (XETRA) o, cuando no está allí, de justETF. Son fuentes no oficiales y pueden fallar o contener errores.</li>
+      <li>El histórico mensual se contrasta con justETF. Cuando un mes difiere en más de 5 puntos, se usa el dato de justETF y se indica en la tabla.</li>
       <li>El TER es orientativo. Compruébalo, junto con el ISIN, en la ficha oficial del producto antes de usarlo para nada real.</li>
       <li>No se incluyen impuestos, inflación ni la horquilla de compra y venta.</li>
       <li>Lo ocurrido en el pasado no indica lo que ocurrirá. Esto es una herramienta de aprendizaje, no una recomendación de inversión.</li>
@@ -250,7 +251,7 @@ function buildModel(catalog, prices) {
     const first = px.findIndex(v => v != null);
     for (let i = first + 1; i < px.length; i++) if (px[i] == null) px[i] = px[i - 1];
     const r = px.map((v, i) => (i > first ? v / px[i - 1] - 1 : 0));
-    return Object.assign({}, p, { first, r, last: a.ultimo, color: '--s' + (k % 8 + 1), source: a.nombre_fuente, currency: a.moneda });
+    return Object.assign({}, p, { first, r, last: a.ultimo, color: '--s' + (k % 8 + 1), source: a.nombre_fuente, currency: a.moneda, fixes: a.correcciones || [] });
   });
   return { months, assets };
 }
@@ -432,7 +433,7 @@ function renderCatalog(catalog, prices) {
   const body = $('catRows'); body.textContent = '';
   catalog.forEach(p => {
     const a = MODEL && MODEL.assets.find(x => x.id === p.id), tr = document.createElement('tr');
-    nameCell(tr, p.nombre, p.categoria.replace(/\.$/, '') + (a && a.source ? '. En la fuente: ' + a.source : '') + (a && a.currency && a.currency !== 'EUR' ? '. Ojo: cotiza en ' + a.currency : ''), a ? a.color : '--s9');
+    nameCell(tr, p.nombre, p.categoria.replace(/\.$/, '') + (a && a.source ? '. En la fuente: ' + a.source : '') + (a && a.currency && a.currency !== 'EUR' ? '. Ojo: cotiza en ' + a.currency : '') + (a && a.fixes.length ? '. Histórico corregido en: ' + a.fixes.map(mesLabel).join(', ') : ''), a ? a.color : '--s9');
     cell(tr, p.isin, 'l'); cell(tr, dec(p.ter, 2) + ' %');
     cell(tr, a ? mesLabel(MODEL.months[a.first]) : 'sin datos'); cell(tr, a ? eur2.format(a.last.precio) : '—'); cell(tr, a ? diaLabel(a.last.fecha) : '—');
     body.appendChild(tr);

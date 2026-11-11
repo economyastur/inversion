@@ -151,7 +151,8 @@ def main():
     for prod in catalog:
         pid, sym = prod["id"], prod["yahoo"]
         log = {}
-        for name, fn in SOURCES:
+        pref = prod.get("fuente")  # fuente preferida para este producto, si se indica
+        for name, fn in sorted(SOURCES, key=lambda x: x[0] != pref):
             try:
                 data = fn(prod)
                 data["yahoo"], data["origen"] = sym, name

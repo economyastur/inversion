@@ -1,20 +1,36 @@
 {
- "ejecutado": "2026-11-11T09:34Z",
+ "ejecutado": "2026-11-11T09:42Z",
  "fuentes": {
   "world": {
-   "yfinance": "ok"
+   "yfinance": "ok",
+   "contraste_justetf": "sin diferencias"
   },
   "allw": {
-   "yfinance": "ok"
+   "yfinance": "ok",
+   "contraste_justetf": "sin diferencias"
   },
   "sp500": {
-   "yfinance": "ok"
+   "yfinance": "ok",
+   "contraste_justetf": [
+    {
+     "mes": "2010-09",
+     "original": 0.0948,
+     "justetf": 0.0115
+    },
+    {
+     "mes": "2010-11",
+     "original": -0.2018,
+     "justetf": 0.0658
+    }
+   ]
   },
   "euro50": {
-   "yfinance": "ok"
+   "yfinance": "ok",
+   "contraste_justetf": "sin diferencias"
   },
   "em": {
-   "yfinance": "ok"
+   "yfinance": "ok",
+   "contraste_justetf": "sin diferencias"
   },
   "bonos": {
    "yfinance": "ValueError: sin datos",
@@ -22,10 +38,12 @@
    "justetf": "ok"
   },
   "oro": {
-   "yfinance": "ok"
+   "yfinance": "ok",
+   "contraste_justetf": "no realizado: ValueError: 11 meses discrepantes: no se corrige"
   },
   "liq": {
-   "yfinance": "ok"
+   "yfinance": "ok",
+   "contraste_justetf": "sin diferencias"
   }
  }
 }

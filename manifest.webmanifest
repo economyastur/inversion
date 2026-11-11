@@ -1,0 +1,17 @@
+{
+  "name": "Inversión · Simulador",
+  "short_name": "Inversión",
+  "description": "Simulador personal de inversión: compara ETF y practica con una cartera ficticia",
+  "lang": "es",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F1320",
+  "theme_color": "#0F1320",
+  "icons": [
+    { "src": "icono.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -2,6 +2,8 @@
 
 App web personal para comparar ETF que se pueden comprar desde España y practicar con una cartera ficticia. No mueve dinero real ni es una recomendación de inversión.
 
+Misma línea visual que las apps de mobilityastur (Costa, Carretera): móvil primero, instalable en la pantalla de inicio.
+
 ## Qué hace
 
 - **Simulador de aportaciones**: aportación inicial, mensual y comisión por compra sobre precios históricos reales.

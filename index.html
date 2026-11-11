@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de inversión</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Banco de pruebas: plan arriba, ranking como resumen, gráfico, y cartera ficticia al final. */
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --line: #d9dfe6;
+  --ink: #101820; --ink-2: #4b5766; --accent: #0f5c8a; --accent-soft: #e3eef5; --on-accent: #ffffff;
+  --good: #1b7a43; --bad: #b3261e;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948; --s9: #7a8794;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #11161b; --surface: #1a2128; --line: #2e3842;
+    --ink: #eef1f4; --ink-2: #a9b4c0; --accent: #6fb6e0; --accent-soft: #1f2f3b; --on-accent: #0c1318;
+    --good: #5fc98a; --bad: #f08a82;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --s9: #8c98a5;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1080px; margin: 0 auto; padding: 28px 20px 56px; display: grid; gap: 20px; }
+h1 { font: 600 2rem/1.1 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.2 var(--display); margin: 0 0 4px; text-wrap: balance; }
+p { margin: 0; }
+.lede { color: var(--ink-2); max-width: 65ch; margin-top: 6px; }
+.hint { color: var(--ink-2); font-size: .875rem; max-width: 72ch; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.notice { background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; }
+.notice strong { font-weight: 600; }
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+label { display: grid; gap: 4px; align-content: end; font-size: .875rem; color: var(--ink-2); }
+input[type="number"], select {
+  font: 500 1rem var(--body); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%;
+}
+button {
+  font: 500 .9375rem var(--body); border-radius: 6px; padding: 9px 14px; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent);
+}
+button.ghost { background: transparent; color: var(--accent); border-color: var(--line); padding: 5px 10px; font-size: .8125rem; }
+input:focus-visible, select:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.weights { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.weights output { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .8125rem; font-weight: 500; color: var(--ink-2); }
+th.l, td.l { text-align: left; white-space: normal; min-width: 200px; }
+td.c, th.c { text-align: center; width: 36px; color: var(--ink-2); }
+tbody tr:last-child td { border-bottom: 0; }
+.name { display: flex; gap: 8px; align-items: baseline; font-weight: 500; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; transform: translateY(1px); }
+.sub { display: block; font-size: .8125rem; color: var(--ink-2); font-weight: 400; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.bar { display: inline-block; width: 64px; height: 8px; border-radius: 4px; background: var(--line); vertical-align: middle; margin-right: 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.chartbox { position: relative; height: 380px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.tile span { display: block; font-size: .8125rem; color: var(--ink-2); }
+.tile b { font: 600 1.375rem/1.3 var(--display); font-variant-numeric: tabular-nums; }
+.trade { display: grid; grid-template-columns: 2fr 1fr auto; gap: 12px; align-items: end; }
+.row-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+details { border-top: 1px solid var(--line); padding-top: 12px; }
+summary { cursor: pointer; font-weight: 500; color: var(--accent); }
+details > div { margin-top: 12px; display: grid; gap: 10px; }
+ul { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: .9375rem; max-width: 75ch; display: grid; gap: 6px; }
+[hidden] { display: none !important; }
+@media (max-width: 560px) { h1 { font-size: 1.6rem; } .chartbox { height: 300px; } .trade { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Simulador de inversión</h1>
+    <p class="lede">Compara qué habría pasado con tus aportaciones en varios ETF que se pueden comprar desde España, y practica con una cartera ficticia. No se mueve dinero real.</p>
+    <p class="hint" id="updated" style="margin-top:6px"></p>
+  </header>
+
+  <p class="notice" id="nodata" hidden><strong>Todavía no hay precios.</strong> Se descargan solos cada día laborable. Para la primera carga, abre la pestaña Actions del repositorio, elige «Actualizar precios» y pulsa «Run workflow».</p>
+
+  <section class="panel" id="planPanel" aria-label="Tu plan">
+    <h2>Tu plan</h2>
+    <div class="controls">
+      <label for="initial">Aportación inicial (€)<input id="initial" type="number" min="0" step="100" value="1000"></label>
+      <label for="monthly">Aportación mensual (€)<input id="monthly" type="number" min="0" step="10" value="100"></label>
+      <label for="fee">Comisión por compra (€)<input id="fee" type="number" min="0" step="0.5" value="1"></label>
+      <label for="years">Periodo simulado
+        <select id="years">
+          <option value="1">Último año</option>
+          <option value="3">Últimos 3 años</option>
+          <option value="5" selected>Últimos 5 años</option>
+          <option value="10">Últimos 10 años</option>
+          <option value="15">Últimos 15 años</option>
+          <option value="0">Todo el histórico común</option>
+        </select>
+      </label>
+      <label for="depRate">Interés del depósito (% anual)<input id="depRate" type="number" min="0" max="10" step="0.25" value="2"></label>
+    </div>
+  </section>
+
+  <section class="panel" id="rankPanel" aria-label="Ranking">
+    <h2>Ranking según tus criterios</h2>
+    <p class="hint">Reparte la importancia entre ganar más, sufrir menos vaivenes y evitar grandes caídas. La puntuación compara las opciones entre sí en el periodo elegido.</p>
+    <div class="weights">
+      <label for="wRet">Rentabilidad: <output id="oRet">6</output><input id="wRet" type="range" min="0" max="10" value="6"></label>
+      <label for="wStab">Estabilidad: <output id="oStab">2</output><input id="wStab" type="range" min="0" max="10" value="2"></label>
+      <label for="wDd">Evitar caídas: <output id="oDd">2</output><input id="wDd" type="range" min="0" max="10" value="2"></label>
+    </div>
+    <p class="notice" id="winner"></p>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="c">#</th><th class="l">Opción</th><th>Valor final</th><th>Aportado</th><th>Ganancia</th>
+          <th>Rentab. anual</th><th>Volatilidad</th><th>Peor caída</th><th>Puntuación</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="hint" id="excluded"></p>
+    <p class="hint">Rentabilidad anual: la de tu dinero, teniendo en cuenta cuándo entró cada aportación y la comisión de cada compra. Los gastos del producto (TER) ya van incluidos en su precio. Volatilidad y peor caída: las del producto en el periodo, con cierres de fin de mes.</p>
+  </section>
+
+  <section class="panel" id="chartPanel" aria-label="Evolución">
+    <h2>Evolución de tu dinero</h2>
+    <p class="hint" id="chartHint"></p>
+    <div class="chartbox"><canvas id="chart" role="img" aria-label="Valor de la inversión mes a mes en cada opción; las cifras están en la tabla del ranking"></canvas></div>
+  </section>
+
+  <section class="panel" id="paperPanel" aria-label="Cartera ficticia">
+    <div class="row-actions">
+      <h2>Cartera ficticia</h2>
+      <button class="ghost" id="reset" type="button">Empezar de cero</button>
+    </div>
+    <p class="hint">Compra y vende con dinero virtual al último cierre disponible. La cartera se guarda solo en este navegador.</p>
+    <div class="tiles">
+      <div class="tile"><span>Efectivo</span><b id="tCash"></b></div>
+      <div class="tile"><span>Invertido (valor actual)</span><b id="tInv"></b></div>
+      <div class="tile"><span>Total</span><b id="tTotal"></b></div>
+      <div class="tile"><span>Resultado</span><b id="tPl"></b></div>
+    </div>
+    <form class="trade" id="buyForm" novalidate>
+      <label for="buyId">Producto<select id="buyId"></select></label>
+      <label for="buyAmt">Importe (€)<input id="buyAmt" type="number" min="1" step="any" value="100"></label>
+      <button type="submit">Comprar</button>
+    </form>
+    <p class="hint" id="paperMsg" role="status"></p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Posición</th><th>Participaciones</th><th>Precio medio</th><th>Último precio</th><th>Valor</th><th>Resultado</th><th></th></tr></thead>
+        <tbody id="posRows"></tbody>
+      </table>
+    </div>
+    <details>
+      <summary>Historial de operaciones</summary>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="l">Fecha del precio</th><th class="l">Producto</th><th>Operación</th><th>Participaciones</th><th>Precio</th><th>Importe</th><th>Comisión</th></tr></thead>
+          <tbody id="opRows"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel" aria-label="Datos">
+    <h2>Productos y datos</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Producto</th><th class="l">ISIN</th><th>TER</th><th>Histórico desde</th><th>Último cierre</th><th>Fecha</th></tr></thead>
+        <tbody id="catRows"></tbody>
+      </table>
+    </div>
+    <ul>
+      <li>Precios: cierres diarios en XETRA, en euros, descargados de Yahoo Finance una vez al día. Es una fuente no oficial y puede fallar o contener errores.</li>
+      <li>El TER es orientativo. Compruébalo, junto con el ISIN, en la ficha oficial del producto antes de usarlo para nada real.</li>
+      <li>No se incluyen impuestos, inflación ni la horquilla de compra y venta.</li>
+      <li>Lo ocurrido en el pasado no indica lo que ocurrirá. Esto es una herramienta de aprendizaje, no una recomendación de inversión.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ---------- Motor de cálculo (funciones puras) ----------
+function simulate(r, start, initial, monthly, fee) {
+  const values = [], paid = [], flows = [];
+  let v = initial > 0 ? Math.max(initial - fee, 0) : 0, p = initial;
+  values.push(v); paid.push(p); flows.push(initial);
+  for (let i = start + 1; i < r.length; i++) {
+    v *= 1 + r[i];
+    const last = i === r.length - 1;
+    if (monthly > 0 && !last) { v += Math.max(monthly - fee, 0); p += monthly; flows.push(monthly); }
+    else flows.push(0);
+    values.push(v); paid.push(p);
+  }
+  return { values, paid, final: v, totalPaid: p, irr: irrAnnual(flows, v) };
+}
+function irrAnnual(flows, finalValue) {
+  const npv = rate => {
+    let s = -finalValue / Math.pow(1 + rate, flows.length - 1);
+    for (let t = 0; t < flows.length; t++) s += flows[t] / Math.pow(1 + rate, t);
+    return s;
+  };
+  let lo = -0.2, hi = 0.2;
+  if (!(npv(lo) * npv(hi) <= 0)) return NaN;
+  for (let k = 0; k < 90; k++) { const mid = (lo + hi) / 2; if (npv(lo) * npv(mid) <= 0) hi = mid; else lo = mid; }
+  return Math.pow(1 + (lo + hi) / 2, 12) - 1;
+}
+function risk(r, start) {
+  const w = r.slice(start + 1);
+  if (w.length < 2) return { vol: 0, maxDD: 0 };
+  const mean = w.reduce((a, b) => a + b, 0) / w.length;
+  const sd = Math.sqrt(w.reduce((a, b) => a + (b - mean) ** 2, 0) / (w.length - 1));
+  let idx = 1, peak = 1, dd = 0;
+  for (const x of w) { idx *= 1 + x; peak = Math.max(peak, idx); dd = Math.min(dd, idx / peak - 1); }
+  return { vol: sd * Math.sqrt(12), maxDD: dd };
+}
+function score(rows, w) {
+  const norm = (key, higherBetter) => {
+    const xs = rows.map(x => x[key]).filter(Number.isFinite), lo = Math.min(...xs), hi = Math.max(...xs);
+    return x => !Number.isFinite(x[key]) ? 0 : hi === lo ? 1 : (higherBetter ? (x[key] - lo) : (hi - x[key])) / (hi - lo);
+  };
+  const a = norm('irr', true), b = norm('vol', false), c = norm('maxDD', true);
+  const tot = w.ret + w.stab + w.dd || 1;
+  rows.forEach(x => { x.score = 100 * (w.ret * a(x) + w.stab * b(x) + w.dd * c(x)) / tot; });
+  return rows.sort((x, y) => y.score - x.score);
+}
+// Eje común de meses y, por producto, precios de fin de mes (se arrastra el último si falta un mes).
+function buildModel(catalog, prices) {
+  const set = new Set();
+  const items = catalog.filter(p => prices.activos[p.id] && prices.activos[p.id].mensual.length > 1);
+  items.forEach(p => prices.activos[p.id].mensual.forEach(([m]) => set.add(m)));
+  const months = [...set].sort();
+  const pos = Object.fromEntries(months.map((m, i) => [m, i]));
+  const assets = items.map((p, k) => {
+    const a = prices.activos[p.id], px = new Array(months.length).fill(null);
+    a.mensual.forEach(([m, v]) => { px[pos[m]] = v; });
+    const first = px.findIndex(v => v != null);
+    for (let i = first + 1; i < px.length; i++) if (px[i] == null) px[i] = px[i - 1];
+    const r = px.map((v, i) => (i > first ? v / px[i - 1] - 1 : 0));
+    return Object.assign({}, p, { first, r, last: a.ultimo, color: '--s' + (k % 8 + 1), source: a.nombre_fuente, currency: a.moneda });
+  });
+  return { months, assets };
+}
+function runAll(model, o) {
+  const n = model.months.length;
+  const common = Math.max(...model.assets.map(a => a.first));
+  const start = o.years > 0 ? Math.max(n - 1 - o.years * 12, 0) : common;
+  const ok = model.assets.filter(a => a.first <= start), excluded = model.assets.filter(a => a.first > start);
+  const dep = Math.pow(1 + o.depRate / 100, 1 / 12) - 1;
+  const opts = ok.map(a => ({ id: a.id, name: a.nombre, sub: a.categoria, color: a.color, r: a.r, fee: o.fee }));
+  opts.push({ id: 'dep', name: 'Depósito', sub: 'Tipo fijo, sin riesgo de mercado', color: '--s9', r: new Array(n).fill(dep), fee: 0 });
+  const rows = opts.map(x => Object.assign(x, simulate(x.r, start, o.initial, o.monthly, x.fee), risk(x.r, start)));
+  return { months: model.months.slice(start), rows: score(rows, o.weights), excluded };
+}
+</script>
+<script>
+// ---------- Interfaz ----------
+const $ = id => document.getElementById(id);
+const eur = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: 'always' });
+const eur2 = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: 'always' });
+const dec = (x, d) => x.toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = (x, d = 1) => dec(x * 100, d) + ' %';
+const signed = (x, f) => (x >= 0 ? '+' : '−') + f.format(Math.abs(x));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const num = (id, fb) => { const v = parseFloat($(id).value); return Number.isFinite(v) && v >= 0 ? v : fb; };
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const mesLabel = m => MESES[+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4);
+const diaLabel = d => +d.slice(8, 10) + ' ' + mesLabel(d);
+const cell = (tr, text, cls) => { const td = document.createElement('td'); td.textContent = text; if (cls) td.className = cls; tr.appendChild(td); return td; };
+const nameCell = (tr, name, sub, color) => {
+  const td = document.createElement('td'); td.className = 'l';
+  td.innerHTML = '<span class="name"><span class="dot"></span><span></span></span><span class="sub"></span>';
+  td.querySelector('.dot').style.background = css(color);
+  td.querySelector('.name span:last-child').textContent = name;
+  td.querySelector('.sub').textContent = sub || '';
+  tr.appendChild(td); return td;
+};
+let MODEL = null, chart = null;
+
+function readPlan() {
+  return {
+    initial: num('initial', 0), monthly: num('monthly', 0), fee: num('fee', 0),
+    years: +$('years').value, depRate: num('depRate', 0),
+    weights: { ret: +$('wRet').value, stab: +$('wStab').value, dd: +$('wDd').value }
+  };
+}
+
+function renderSim() {
+  const o = readPlan();
+  $('oRet').textContent = o.weights.ret; $('oStab').textContent = o.weights.stab; $('oDd').textContent = o.weights.dd;
+  const res = runAll(MODEL, o);
+  const body = $('rows'); body.textContent = '';
+  res.rows.forEach((x, i) => {
+    const gain = x.final - x.totalPaid, tr = document.createElement('tr');
+    cell(tr, String(i + 1), 'c');
+    nameCell(tr, x.name, x.sub, x.color);
+    cell(tr, eur.format(x.final)); cell(tr, eur.format(x.totalPaid));
+    cell(tr, signed(gain, eur), gain >= 0 ? 'pos' : 'neg');
+    cell(tr, Number.isFinite(x.irr) ? pct(x.irr) : 'n/d'); cell(tr, pct(x.vol)); cell(tr, pct(x.maxDD, 0));
+    const td = cell(tr, '');
+    td.innerHTML = '<span class="bar"><i></i></span><span></span>';
+    td.querySelector('i').style.width = Math.round(x.score) + '%';
+    td.lastChild.textContent = Math.round(x.score);
+    body.appendChild(tr);
+  });
+  const top = res.rows[0], first = mesLabel(res.months[0]), last = mesLabel(res.months[res.months.length - 1]);
+  const w = $('winner'); w.textContent = '';
+  if (o.initial + o.monthly === 0) w.textContent = 'Indica una aportación inicial o mensual para ver resultados.';
+  else {
+    const s = document.createElement('strong'); s.textContent = top.name;
+    w.append('Con estos pesos, la opción mejor puntuada entre ' + first + ' y ' + last + ' fue ', s,
+      ': ' + eur.format(top.totalPaid) + ' aportados se habrían convertido en ' + eur.format(top.final) + '. Es una comparación del pasado, no una predicción.');
+  }
+  $('excluded').textContent = res.excluded.length
+    ? 'Fuera de la comparación por no tener histórico suficiente: ' + res.excluded.map(a => a.nombre + ' (desde ' + mesLabel(MODEL.months[a.first]) + ')').join('; ') + '.'
+    : '';
+  $('chartHint').textContent = 'De ' + first + ' a ' + last + '. La línea discontinua es lo que llevas aportado.';
+  drawChart(res);
+}
+
+function drawChart(res) {
+  if (typeof Chart === 'undefined') { $('chartHint').textContent = 'No se ha podido cargar el gráfico. Las cifras están en la tabla.'; return; }
+  const ink2 = css('--ink-2'), line = css('--line');
+  const datasets = res.rows.slice().sort((a, b) => a.color.localeCompare(b.color)).map(x => ({
+    label: x.name, data: x.values, borderColor: css(x.color), backgroundColor: css(x.color),
+    borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, borderDash: x.id === 'dep' ? [2, 3] : []
+  }));
+  datasets.push({ label: 'Aportado', data: res.rows[0].paid, borderColor: ink2, backgroundColor: ink2, borderWidth: 1.5, borderDash: [6, 4], pointRadius: 0, pointHoverRadius: 3 });
+  if (chart) chart.destroy();
+  chart = new Chart($('chart'), {
+    type: 'line', data: { labels: res.months.map(mesLabel), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { color: css('--ink'), usePointStyle: true, pointStyle: 'line', padding: 14, font: { family: 'IBM Plex Sans', size: 12 } } },
+        tooltip: { itemSort: (a, b) => b.parsed.y - a.parsed.y, callbacks: { label: c => ' ' + c.dataset.label + ': ' + eur.format(c.parsed.y) } }
+      },
+      scales: {
+        x: { grid: { display: false }, border: { color: line }, ticks: { color: ink2, maxTicksLimit: 8, maxRotation: 0 } },
+        y: { beginAtZero: true, grid: { color: line }, border: { display: false }, ticks: { color: ink2, callback: v => eur.format(v) } }
+      }
+    }
+  });
+}
+
+// ---------- Cartera ficticia (solo en este navegador) ----------
+const KEY = 'inversion.cartera.v1', START_CASH = 10000;
+let memory = null;
+function loadPaper() {
+  try { const p = JSON.parse(localStorage.getItem(KEY)); if (p && Array.isArray(p.ops)) return p; } catch (e) {}
+  return memory || { cash: START_CASH, ops: [] };
+}
+function savePaper(p) { memory = p; try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {} }
+function positions(p) {
+  const pos = {};
+  p.ops.forEach(op => {
+    const x = pos[op.id] || (pos[op.id] = { units: 0, cost: 0 });
+    if (op.tipo === 'compra') { x.units += op.units; x.cost += op.importe; }
+    else { x.cost -= x.cost * (op.units / x.units); x.units -= op.units; }
+  });
+  return Object.entries(pos).filter(([, x]) => x.units > 1e-9);
+}
+function renderPaper(msg) {
+  const p = loadPaper(), byId = Object.fromEntries(MODEL.assets.map(a => [a.id, a]));
+  const body = $('posRows'); body.textContent = '';
+  let inv = 0;
+  const pos = positions(p);
+  pos.forEach(([id, x]) => {
+    const a = byId[id]; if (!a) return;
+    const val = x.units * a.last.precio, pl = val - x.cost; inv += val;
+    const tr = document.createElement('tr');
+    nameCell(tr, a.nombre, a.categoria, a.color);
+    cell(tr, dec(x.units, 4)); cell(tr, eur2.format(x.cost / x.units)); cell(tr, eur2.format(a.last.precio));
+    cell(tr, eur2.format(val)); cell(tr, signed(pl, eur2) + ' (' + pct(pl / x.cost) + ')', pl >= 0 ? 'pos' : 'neg');
+    const td = cell(tr, ''), b = document.createElement('button');
+    b.type = 'button'; b.className = 'ghost'; b.textContent = 'Vender todo'; b.addEventListener('click', () => sell(id)); td.appendChild(b);
+    body.appendChild(tr);
+  });
+  if (!pos.length) { const tr = document.createElement('tr'); const td = cell(tr, 'Aún no tienes posiciones. Haz una compra de prueba.', 'l'); td.colSpan = 7; body.appendChild(tr); }
+  const total = p.cash + inv, pl = total - START_CASH;
+  $('tCash').textContent = eur2.format(p.cash); $('tInv').textContent = eur2.format(inv); $('tTotal').textContent = eur2.format(total);
+  $('tPl').textContent = signed(pl, eur2); $('tPl').className = pl >= 0 ? 'pos' : 'neg';
+  const ob = $('opRows'); ob.textContent = '';
+  p.ops.slice().reverse().forEach(op => {
+    const a = byId[op.id], tr = document.createElement('tr');
+    cell(tr, diaLabel(op.fecha), 'l'); cell(tr, a ? a.nombre : op.id, 'l'); cell(tr, op.tipo === 'compra' ? 'Compra' : 'Venta');
+    cell(tr, dec(op.units, 4)); cell(tr, eur2.format(op.precio)); cell(tr, eur2.format(op.importe)); cell(tr, eur2.format(op.comision));
+    ob.appendChild(tr);
+  });
+  $('paperMsg').textContent = msg || '';
+}
+function buy(ev) {
+  ev.preventDefault();
+  const p = loadPaper(), a = MODEL.assets.find(x => x.id === $('buyId').value), amt = num('buyAmt', 0), fee = num('fee', 0);
+  if (!a) return;
+  if (amt <= fee) return renderPaper('El importe tiene que ser mayor que la comisión (' + eur2.format(fee) + ').');
+  if (amt > p.cash) return renderPaper('No tienes efectivo suficiente: te quedan ' + eur2.format(p.cash) + '.');
+  const units = (amt - fee) / a.last.precio;
+  p.cash -= amt; p.ops.push({ tipo: 'compra', id: a.id, fecha: a.last.fecha, units, precio: a.last.precio, importe: amt, comision: fee });
+  savePaper(p);
+  renderPaper('Compra anotada: ' + dec(units, 4) + ' participaciones de ' + a.nombre + ' a ' + eur2.format(a.last.precio) + '.');
+}
+function sell(id) {
+  const p = loadPaper(), a = MODEL.assets.find(x => x.id === id), found = positions(p).find(([k]) => k === id);
+  if (!a || !found) return;
+  const fee = num('fee', 0), units = found[1].units, net = Math.max(units * a.last.precio - fee, 0);
+  p.cash += net; p.ops.push({ tipo: 'venta', id, fecha: a.last.fecha, units, precio: a.last.precio, importe: net, comision: fee });
+  savePaper(p);
+  renderPaper('Venta anotada: recibes ' + eur2.format(net) + ' por ' + a.nombre + '.');
+}
+let armed = false;
+function reset() {
+  if (!armed) { armed = true; $('reset').textContent = 'Pulsa otra vez para borrar la cartera'; setTimeout(() => { armed = false; $('reset').textContent = 'Empezar de cero'; }, 4000); return; }
+  armed = false; $('reset').textContent = 'Empezar de cero';
+  savePaper({ cash: START_CASH, ops: [] }); renderPaper('Cartera reiniciada con ' + eur.format(START_CASH) + ' virtuales.');
+}
+
+function renderCatalog(catalog, prices) {
+  const body = $('catRows'); body.textContent = '';
+  catalog.forEach(p => {
+    const a = MODEL && MODEL.assets.find(x => x.id === p.id), tr = document.createElement('tr');
+    nameCell(tr, p.nombre, p.categoria.replace(/\.$/, '') + (a && a.source ? '. En la fuente: ' + a.source : '') + (a && a.currency && a.currency !== 'EUR' ? '. Ojo: cotiza en ' + a.currency : ''), a ? a.color : '--s9');
+    cell(tr, p.isin, 'l'); cell(tr, dec(p.ter, 2) + ' %');
+    cell(tr, a ? mesLabel(MODEL.months[a.first]) : 'sin datos'); cell(tr, a ? eur2.format(a.last.precio) : '—'); cell(tr, a ? diaLabel(a.last.fecha) : '—');
+    body.appendChild(tr);
+  });
+  const errs = Object.values(prices.errores || {});
+  $('updated').textContent = prices.actualizado
+    ? 'Precios actualizados el ' + diaLabel(prices.actualizado.slice(0, 10)) + '.' + (errs.length ? ' No se pudo actualizar: ' + errs.join('; ') + '.' : '')
+    : '';
+}
+
+async function init() {
+  let catalog = [], prices = { activos: {}, errores: {} };
+  try {
+    const [c, p] = await Promise.all([fetch('data/catalog.json', { cache: 'no-cache' }), fetch('data/prices.json', { cache: 'no-cache' })]);
+    catalog = (await c.json()).productos; prices = await p.json();
+  } catch (e) {
+    $('nodata').hidden = false; $('nodata').textContent = 'No se han podido leer los datos. Recarga la página; si sigue igual, revisa que existan data/catalog.json y data/prices.json.';
+  }
+  const model = buildModel(catalog, prices);
+  if (!model.assets.length) {
+    $('nodata').hidden = false;
+    ['planPanel', 'rankPanel', 'chartPanel', 'paperPanel'].forEach(id => { $(id).hidden = true; });
+    renderCatalog(catalog, prices);
+    return;
+  }
+  MODEL = model;
+  model.assets.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.textContent = a.nombre; $('buyId').appendChild(o); });
+  renderCatalog(catalog, prices);
+  document.querySelectorAll('#planPanel input, #planPanel select, #rankPanel input').forEach(el => el.addEventListener('input', renderSim));
+  $('buyForm').addEventListener('submit', buy);
+  $('reset').addEventListener('click', reset);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { renderSim(); renderPaper(); renderCatalog(catalog, prices); });
+  renderSim(); renderPaper();
+}
+init();
+</script>
+</body>
+</html>

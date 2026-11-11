@@ -1,0 +1,34 @@
+name: Actualizar precios
+
+on:
+  schedule:
+    - cron: "23 18 * * 1-5"   # lunes a viernes, tras el cierre de XETRA
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "data/catalog.json"
+      - ".github/workflows/update-data.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descargar precios
+        run: python3 scripts/fetch_prices.py
+      - name: Guardar cambios
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/prices.json
+          git diff --cached --quiet || (git commit -m "Actualizar precios" && git pull --rebase && git push)

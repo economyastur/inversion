@@ -1,0 +1,13 @@
+{
+  "nota": "TER orientativo: compruebalo en la ficha (KID) de cada producto. 'yahoo' es el simbolo en Yahoo Finance (cotizacion en XETRA, en euros).",
+  "productos": [
+    { "id": "world",  "nombre": "iShares Core MSCI World (Acc)",            "categoria": "Renta variable mundial (países desarrollados)", "isin": "IE00B4L5Y983", "yahoo": "EUNL.DE", "ter": 0.20 },
+    { "id": "allw",   "nombre": "Vanguard FTSE All-World (Acc)",            "categoria": "Renta variable mundial (con emergentes)",      "isin": "IE00BK5BQT80", "yahoo": "VWCE.DE", "ter": 0.19 },
+    { "id": "sp500",  "nombre": "iShares Core S&P 500 (Acc)",               "categoria": "Renta variable EE. UU.",                       "isin": "IE00B5BMR087", "yahoo": "SXR8.DE", "ter": 0.07 },
+    { "id": "euro50", "nombre": "iShares Core EURO STOXX 50 (Acc)",         "categoria": "Renta variable zona euro",                     "isin": "IE00B53L3W79", "yahoo": "SXRT.DE", "ter": 0.10 },
+    { "id": "em",     "nombre": "iShares Core MSCI EM IMI (Acc)",           "categoria": "Renta variable emergentes",                    "isin": "IE00BKM4GZ66", "yahoo": "IS3N.DE", "ter": 0.18 },
+    { "id": "bonos",  "nombre": "Xtrackers II Eurozone Government Bond 1C", "categoria": "Deuda pública zona euro",                      "isin": "LU0290355717", "yahoo": "DBXN.DE", "ter": 0.09 },
+    { "id": "oro",    "nombre": "Invesco Physical Gold ETC",                "categoria": "Oro físico",                                   "isin": "IE00B579F325", "yahoo": "8PSG.DE", "ter": 0.12 },
+    { "id": "liq",    "nombre": "Xtrackers II EUR Overnight Rate Swap 1C",  "categoria": "Liquidez (tipo a un día del euro)",            "isin": "LU0290358497", "yahoo": "XEON.DE", "ter": 0.10 }
+  ]
+}

@@ -1,5 +1,5 @@
 {
- "ejecutado": "2026-11-11T09:42Z",
+ "ejecutado": "2026-11-11T09:43Z",
  "fuentes": {
   "world": {
    "yfinance": "ok",
@@ -33,13 +33,10 @@
    "contraste_justetf": "sin diferencias"
   },
   "bonos": {
-   "yfinance": "ValueError: sin datos",
-   "yahoo": "HTTPError: HTTP Error 429: Too Many Requests",
    "justetf": "ok"
   },
   "oro": {
-   "yfinance": "ok",
-   "contraste_justetf": "no realizado: ValueError: 11 meses discrepantes: no se corrige"
+   "justetf": "ok"
   },
   "liq": {
    "yfinance": "ok",

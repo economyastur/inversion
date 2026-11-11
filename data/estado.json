@@ -1,0 +1,31 @@
+{
+ "ejecutado": "2026-11-11T09:34Z",
+ "fuentes": {
+  "world": {
+   "yfinance": "ok"
+  },
+  "allw": {
+   "yfinance": "ok"
+  },
+  "sp500": {
+   "yfinance": "ok"
+  },
+  "euro50": {
+   "yfinance": "ok"
+  },
+  "em": {
+   "yfinance": "ok"
+  },
+  "bonos": {
+   "yfinance": "ValueError: sin datos",
+   "yahoo": "HTTPError: HTTP Error 429: Too Many Requests",
+   "justetf": "ok"
+  },
+  "oro": {
+   "yfinance": "ok"
+  },
+  "liq": {
+   "yfinance": "ok"
+  }
+ }
+}

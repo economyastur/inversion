@@ -1,5 +1,5 @@
 {
- "ejecutado": "2026-11-21T00:02Z",
+ "ejecutado": "2026-11-24T03:59Z",
  "fuentes": {
   "world": {
    "yfinance": "ok",
@@ -30,7 +30,13 @@
   },
   "em": {
    "yfinance": "ok",
-   "contraste_justetf": "sin diferencias"
+   "contraste_justetf": [
+    {
+     "mes": "2026-11",
+     "original": -0.0892,
+     "justetf": -0.0286
+    }
+   ]
   },
   "bonos": {
    "justetf": "ok"
